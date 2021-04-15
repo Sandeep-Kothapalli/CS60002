@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   syntax='proto3',
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_pb=b'\n\x11\x66ileService.proto\x12\x0b\x66ileservice\"Q\n\x08\x46ileData\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08\x66ilename\x18\x02 \x01(\t\x12\x0c\n\x04\x64\x61ta\x18\x03 \x01(\x0c\x12\x13\n\x0breplicaNode\x18\x04 \x01(\t\"/\n\x08MetaData\x12\x10\n\x08\x66ilename\x18\x01 \x01(\t\x12\x11\n\tseqValues\x18\x02 \x01(\x0c\"\'\n\x03\x61\x63k\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\x1c\n\x08UserInfo\x12\x10\n\x08username\x18\x01 \x01(\t\".\n\x08\x46ileInfo\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08\x66ilename\x18\x02 \x01(\t\"%\n\x10\x46ileListResponse\x12\x11\n\tFilenames\x18\x01 \x01(\t\"<\n\x0b\x43lusterInfo\x12\n\n\x02ip\x18\x01 \x01(\t\x12\x0c\n\x04port\x18\x02 \x01(\t\x12\x13\n\x0b\x63lusterName\x18\x03 \x01(\t\"\x07\n\x05\x45mpty\"G\n\x0c\x43lusterStats\x12\x11\n\tcpu_usage\x18\x01 \x01(\t\x12\x12\n\ndisk_space\x18\x02 \x01(\t\x12\x10\n\x08used_mem\x18\x03 \x01(\t2\xdf\x04\n\x0b\x46ileservice\x12\x35\n\nUploadFile\x12\x15.fileservice.FileData\x1a\x10.fileservice.ack\x12<\n\x0c\x44ownloadFile\x12\x15.fileservice.FileInfo\x1a\x15.fileservice.FileData\x12\x35\n\nFileSearch\x12\x15.fileservice.FileInfo\x1a\x10.fileservice.ack\x12:\n\rReplicateFile\x12\x15.fileservice.FileData\x1a\x10.fileservice.ack(\x01\x12@\n\x08\x46ileList\x12\x15.fileservice.UserInfo\x1a\x1d.fileservice.FileListResponse\x12\x35\n\nFileDelete\x12\x15.fileservice.FileInfo\x1a\x10.fileservice.ack\x12\x37\n\nUpdateFile\x12\x15.fileservice.FileData\x1a\x10.fileservice.ack(\x01\x12@\n\x0fgetClusterStats\x12\x12.fileservice.Empty\x1a\x19.fileservice.ClusterStats\x12;\n\rgetLeaderInfo\x12\x18.fileservice.ClusterInfo\x1a\x10.fileservice.ack\x12\x37\n\x0cMetaDataInfo\x12\x15.fileservice.MetaData\x1a\x10.fileservice.ackb\x06proto3'
+  serialized_pb=b'\n\x11\x66ileService.proto\x12\x0b\x66ileservice\"M\n\x08\x46ileData\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08\x66ilename\x18\x02 \x01(\t\x12\x0c\n\x04\x64\x61ta\x18\x03 \x01(\x0c\x12\x0f\n\x07message\x18\x04 \x01(\t\"/\n\x08MetaData\x12\x10\n\x08\x66ilename\x18\x01 \x01(\t\x12\x11\n\tseqValues\x18\x02 \x01(\x0c\"\'\n\x03\x61\x63k\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x0f\n\x07message\x18\x02 \x01(\t\"\x1c\n\x08UserInfo\x12\x10\n\x08username\x18\x01 \x01(\t\".\n\x08\x46ileInfo\x12\x10\n\x08username\x18\x01 \x01(\t\x12\x10\n\x08\x66ilename\x18\x02 \x01(\t\"%\n\x10\x46ileListResponse\x12\x11\n\tFilenames\x18\x01 \x01(\t\"<\n\x0b\x43lusterInfo\x12\n\n\x02ip\x18\x01 \x01(\t\x12\x0c\n\x04port\x18\x02 \x01(\t\x12\x13\n\x0b\x63lusterName\x18\x03 \x01(\t\"\x07\n\x05\x45mpty\"G\n\x0c\x43lusterStats\x12\x11\n\tcpu_usage\x18\x01 \x01(\t\x12\x12\n\ndisk_space\x18\x02 \x01(\t\x12\x10\n\x08used_mem\x18\x03 \x01(\t2\xdf\x04\n\x0b\x46ileservice\x12\x35\n\nUploadFile\x12\x15.fileservice.FileData\x1a\x10.fileservice.ack\x12<\n\x0c\x44ownloadFile\x12\x15.fileservice.FileInfo\x1a\x15.fileservice.FileData\x12\x35\n\nFileSearch\x12\x15.fileservice.FileInfo\x1a\x10.fileservice.ack\x12:\n\rReplicateFile\x12\x15.fileservice.FileData\x1a\x10.fileservice.ack(\x01\x12@\n\x08\x46ileList\x12\x15.fileservice.UserInfo\x1a\x1d.fileservice.FileListResponse\x12\x35\n\nFileDelete\x12\x15.fileservice.FileInfo\x1a\x10.fileservice.ack\x12\x37\n\nUpdateFile\x12\x15.fileservice.FileData\x1a\x10.fileservice.ack(\x01\x12@\n\x0fgetClusterStats\x12\x12.fileservice.Empty\x1a\x19.fileservice.ClusterStats\x12;\n\rgetLeaderInfo\x12\x18.fileservice.ClusterInfo\x1a\x10.fileservice.ack\x12\x37\n\x0cMetaDataInfo\x12\x15.fileservice.MetaData\x1a\x10.fileservice.ackb\x06proto3'
 )
 
 
@@ -55,7 +55,7 @@ _FILEDATA = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR,  create_key=_descriptor._internal_create_key),
     _descriptor.FieldDescriptor(
-      name='replicaNode', full_name='fileservice.FileData.replicaNode', index=3,
+      name='message', full_name='fileservice.FileData.message', index=3,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=b"".decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -74,7 +74,7 @@ _FILEDATA = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=34,
-  serialized_end=115,
+  serialized_end=111,
 )
 
 
@@ -112,8 +112,8 @@ _METADATA = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=117,
-  serialized_end=164,
+  serialized_start=113,
+  serialized_end=160,
 )
 
 
@@ -151,8 +151,8 @@ _ACK = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=166,
-  serialized_end=205,
+  serialized_start=162,
+  serialized_end=201,
 )
 
 
@@ -183,8 +183,8 @@ _USERINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=207,
-  serialized_end=235,
+  serialized_start=203,
+  serialized_end=231,
 )
 
 
@@ -222,8 +222,8 @@ _FILEINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=237,
-  serialized_end=283,
+  serialized_start=233,
+  serialized_end=279,
 )
 
 
@@ -254,8 +254,8 @@ _FILELISTRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=285,
-  serialized_end=322,
+  serialized_start=281,
+  serialized_end=318,
 )
 
 
@@ -300,8 +300,8 @@ _CLUSTERINFO = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=324,
-  serialized_end=384,
+  serialized_start=320,
+  serialized_end=380,
 )
 
 
@@ -325,8 +325,8 @@ _EMPTY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=386,
-  serialized_end=393,
+  serialized_start=382,
+  serialized_end=389,
 )
 
 
@@ -371,8 +371,8 @@ _CLUSTERSTATS = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=395,
-  serialized_end=466,
+  serialized_start=391,
+  serialized_end=462,
 )
 
 DESCRIPTOR.message_types_by_name['FileData'] = _FILEDATA
@@ -458,8 +458,8 @@ _FILESERVICE = _descriptor.ServiceDescriptor(
   index=0,
   serialized_options=None,
   create_key=_descriptor._internal_create_key,
-  serialized_start=469,
-  serialized_end=1076,
+  serialized_start=465,
+  serialized_end=1072,
   methods=[
   _descriptor.MethodDescriptor(
     name='UploadFile',

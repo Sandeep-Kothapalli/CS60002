@@ -5,7 +5,7 @@ package fileservice;
 service Fileservice {
 	
 	rpc UploadFile (FileData) returns (ack);
-	rpc DownloadFile (FileInfo) returns (stream FileData);
+	rpc DownloadFile (FileInfo) returns (FileData);
 	rpc FileSearch (FileInfo) returns (ack);
 	rpc ReplicateFile (stream FileData) returns (ack);
 	rpc FileList (UserInfo) returns (FileListResponse);
@@ -19,6 +19,7 @@ message FileData {
 	string username = 1;
 	string filename =2;
 	bytes data =3;
+	string message = 4;
 }
 
 message ack {

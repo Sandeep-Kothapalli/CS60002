@@ -19,7 +19,7 @@ class FileserviceStub(object):
                 request_serializer=fileService__pb2.FileData.SerializeToString,
                 response_deserializer=fileService__pb2.ack.FromString,
                 )
-        self.DownloadFile = channel.unary_stream(
+        self.DownloadFile = channel.unary_unary(
                 '/fileservice.Fileservice/DownloadFile',
                 request_serializer=fileService__pb2.FileInfo.SerializeToString,
                 response_deserializer=fileService__pb2.FileData.FromString,
@@ -126,7 +126,7 @@ def add_FileserviceServicer_to_server(servicer, server):
                     request_deserializer=fileService__pb2.FileData.FromString,
                     response_serializer=fileService__pb2.ack.SerializeToString,
             ),
-            'DownloadFile': grpc.unary_stream_rpc_method_handler(
+            'DownloadFile': grpc.unary_unary_rpc_method_handler(
                     servicer.DownloadFile,
                     request_deserializer=fileService__pb2.FileInfo.FromString,
                     response_serializer=fileService__pb2.FileData.SerializeToString,
@@ -204,7 +204,7 @@ class Fileservice(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_stream(request, target, '/fileservice.Fileservice/DownloadFile',
+        return grpc.experimental.unary_unary(request, target, '/fileservice.Fileservice/DownloadFile',
             fileService__pb2.FileInfo.SerializeToString,
             fileService__pb2.FileData.FromString,
             options, channel_credentials,

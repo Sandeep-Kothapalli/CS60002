@@ -109,32 +109,46 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
 
          # Check if file exists
         if(self.fileExists(request.username, request.filename)==False):
-            return fileService_pb2.FileData(username=request.username, filename=request.filename, data=bytes("",'utf-8'))
+            return fileService_pb2.FileData(username=request.username, filename=request.filename, data=bytes("",'utf-8'), message="FNE")
 
         fileMeta = db.parseMetaData(request.username, request.filename)
         
         primaryIP, replicaIP = -1,-1
         channel1, channel2 = -1,-1
-        if(fileMeta[0] in self.clusterLeaders): 
-            primaryIP = self.clusterLeaders[fileMeta[0]]
-            channel1 = self.serverStatus.isChannelAlive(primaryIP)
+        # if(fileMeta[0] in self.clusterLeaders): 
+        #     primaryIP = self.clusterLeaders[fileMeta[0]]
+        #     channel1 = self.serverStatus.isChannelAlive(primaryIP)
+
+        primaryIP = fileMeta[0]
+        channel1 = self.serverStatus.isChannelAlive(primaryIP)
             
-        if(fileMeta[1] in self.clusterLeaders):
-            replicaIP = self.clusterLeaders[fileMeta[1]]
-            channel2 = self.serverStatus.isChannelAlive(replicaIP)
+        # if(fileMeta[1] in self.clusterLeaders):
+        #     replicaIP = self.clusterLeaders[fileMeta[1]]
+        #     channel2 = self.serverStatus.isChannelAlive(replicaIP)
+
+        replicaIP = fileMeta[1]
+        channel2 = self.serverStatus.isChannelAlive(replicaIP)
 
         if(channel1):
             stub = fileService_pb2_grpc.FileserviceStub(channel1)
-            responses = stub.DownloadFile(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
-            for response in responses:
-                yield response
+            # responses = stub.DownloadFile(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
+            
+            response = stub.DownloadFile(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
+            # for response in responses:
+            #     yield response
+
+            return response
         elif(channel2):
             stub = fileService_pb2_grpc.FileserviceStub(channel2)
-            responses = stub.DownloadFile(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
-            for response in responses:
-                yield response
+            # responses = stub.DownloadFile(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
+
+            response = stub.DownloadFile(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
+            # for response in responses:
+            #     yield response
+
+            return response
         else:
-            return fileService_pb2.FileData(username=request.username, filename=request.filename, data=bytes("",'utf-8'))
+            return fileService_pb2.FileData(username=request.username, filename=request.filename, data=bytes("",'utf-8'), message="2F")
 
     #
     #   Function to check if file exists in db (redis)

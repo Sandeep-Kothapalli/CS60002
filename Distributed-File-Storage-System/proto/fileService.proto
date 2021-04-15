@@ -21,7 +21,8 @@ message FileData {
 	string filename =2;
 	bytes data =3;
 	// int32 seqNo = 4;
-	string replicaNode = 4;
+	// string replicaNode = 4;
+	string message = 4;
 }
 
 message MetaData {

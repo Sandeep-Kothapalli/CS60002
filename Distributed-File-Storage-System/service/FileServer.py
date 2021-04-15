@@ -178,73 +178,73 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
     #
     def DownloadFile(self, request, context):
 
-        print("Inside Download")
+        print("Inside Download - server")
 
         # If the node is the leader of the cluster. 
-        if(int(db.get("primaryStatus"))==1):
+        # if(int(db.get("primaryStatus"))==1):
             
-            print("Inside primary download")
+        #     print("Inside primary download")
             
-            # Check if file exists
-            if(self.fileExists(request.username, request.filename)==0):
-                print("File does not exist")
-                yield fileService_pb2.FileData(username = request.username, filename = request.filename, data=bytes("",'utf-8'), seqNo = 0)
-                return
+        #     # Check if file exists
+        #     if(self.fileExists(request.username, request.filename)==0):
+        #         print("File does not exist")
+        #         yield fileService_pb2.FileData(username = request.username, filename = request.filename, data=bytes("",'utf-8'), seqNo = 0)
+        #         return
 
-            # If the file is present in cache then just fetch it and return. No need to go to individual node.
-            if(self.lru.has_key(request.username + "_" + request.filename)):
-                print("Fetching data from Cache")
-                CHUNK_SIZE=4000000
-                fileName = request.username + "_" + request.filename
-                filePath = self.lru[fileName]
-                outfile = os.path.join(filePath, fileName)
+        #     # If the file is present in cache then just fetch it and return. No need to go to individual node.
+        #     if(self.lru.has_key(request.username + "_" + request.filename)):
+        #         print("Fetching data from Cache")
+        #         CHUNK_SIZE=4000000
+        #         fileName = request.username + "_" + request.filename
+        #         filePath = self.lru[fileName]
+        #         outfile = os.path.join(filePath, fileName)
                 
-                with open(outfile, 'rb') as infile:
-                    while True:
-                        chunk = infile.read(CHUNK_SIZE)
-                        if not chunk: break
-                        yield fileService_pb2.FileData(username=request.username, filename=request.filename, data=chunk, seqNo=1)
+        #         with open(outfile, 'rb') as infile:
+        #             while True:
+        #                 chunk = infile.read(CHUNK_SIZE)
+        #                 if not chunk: break
+        #                 yield fileService_pb2.FileData(username=request.username, filename=request.filename, data=chunk, seqNo=1)
             
-            # If the file is not present in the cache, then fetch it from the individual node.
-            else:
-                print("Fetching the metadata")
+        #     # If the file is not present in the cache, then fetch it from the individual node.
+        #     else:
+        #         print("Fetching the metadata")
 
-                # Step 1: get metadata i.e. the location of chunks.
-                metaData = db.parseMetaData(request.username, request.filename)
+        #         # Step 1: get metadata i.e. the location of chunks.
+        #         metaData = db.parseMetaData(request.username, request.filename)
 
-                print(metaData)
+        #         print(metaData)
                 
-                #Step 2: make gRPC calls and get the fileData from all the nodes.
-                downloadHelper = DownloadHelper(self.hostname, self.serverPort, self.activeNodesChecker)
-                data = downloadHelper.getDataFromNodes(request.username, request.filename, metaData)
-                print("Sending the data to client")
+        #         #Step 2: make gRPC calls and get the fileData from all the nodes.
+        #         downloadHelper = DownloadHelper(self.hostname, self.serverPort, self.activeNodesChecker)
+        #         data = downloadHelper.getDataFromNodes(request.username, request.filename, metaData)
+        #         print("Sending the data to client")
 
-                #Step 3: send the file to supernode using gRPC streaming.
-                chunk_size = 4000000
-                start, end = 0, chunk_size
-                while(True):
-                    chunk = data[start:end]
-                    if(len(chunk)==0): break
-                    start=end
-                    end += chunk_size
-                    yield fileService_pb2.FileData(username = request.username, filename = request.filename, data=chunk, seqNo = request.seqNo)
+        #         #Step 3: send the file to supernode using gRPC streaming.
+        #         chunk_size = 4000000
+        #         start, end = 0, chunk_size
+        #         while(True):
+        #             chunk = data[start:end]
+        #             if(len(chunk)==0): break
+        #             start=end
+        #             end += chunk_size
+        #             yield fileService_pb2.FileData(username = request.username, filename = request.filename, data=chunk, seqNo = request.seqNo)
                 
-                # Step 4: update the cache based on LRU(least recently used) algorithm.
-                self.saveInCache(request.username, request.filename, data)
+        #         # Step 4: update the cache based on LRU(least recently used) algorithm.
+        #         self.saveInCache(request.username, request.filename, data)
 
         # If the node is not the leader, then just fetch the fileChunk from the local db and stream it back to leader.
-        else:
-            key = request.username + "_" + request.filename + "_" + str(request.seqNo)
-            print(key)
-            data = db.getFileData(key)
-            chunk_size = 4000000
-            start, end = 0, chunk_size
-            while(True):
-                chunk = data[start:end]
-                if(len(chunk)==0): break
-                start=end
-                end += chunk_size
-                yield fileService_pb2.FileData(username = request.username, filename = request.filename, data=chunk, seqNo = request.seqNo)
+        # else:
+        key = request.username + "_" + request.filename # + "_" + str(request.seqNo)
+        print(key)
+        data = db.getFileData(key)
+        # chunk_size = 4000000
+        # start, end = 0, chunk_size
+        # while(True):
+        # chunk = data[start:end]
+        # if(len(chunk)==0): break
+        # start=end
+        # end += chunk_size
+        return fileService_pb2.FileData(username = request.username, filename = request.filename, data=data, message="success" )
 
     # This service is responsible fetching all the files.
     def FileList(self, request, context):

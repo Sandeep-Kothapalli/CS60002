@@ -56,6 +56,14 @@ def downloadTheFile(stub):
     data = bytes("",'utf-8')
     sTime=time.time()
     response = stub.DownloadFile(fileService_pb2.FileInfo(username=userName, filename=fileName))
+
+    if response.message == "FNE":
+        print("Error : File {} not found for user {}".format(fileName, userName))
+        return
+
+    elif response.message == "2F":
+        print("Two nodes down : data could not be retrieved")
+        return
     
     fileName = response.filename
     data += response.data
