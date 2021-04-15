@@ -16,7 +16,7 @@ from ClusterStatus import ServerStatus
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
-neighbors = {'172.16.45.132:3000' : '172.16.45.133:3000', '172.16.45.133:3000' : '172.16.45.134:3000', '172.16.45.134:3000' : '172.16.45.132:3000'}
+neighbors = {'10.160.0.13:3000' : '10.148.0.2:3000', '10.148.0.2:3000' : '10.146.0.2.134:3000', '10.146.0.2:3000' : '10.160.0.13:3000'}
 
 #
 #   *** FileServer Service : FileServer service as per fileService.proto file. ***
