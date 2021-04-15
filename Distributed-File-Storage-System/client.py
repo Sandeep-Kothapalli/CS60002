@@ -142,31 +142,34 @@ def getListOfAllTheFilesForTheUser(stub):
 
 
 def handleUserInputs(stub):
-    print("===================================")
-    print("1. Upload a file")
-    print("2. Download a file.")
-    print("3. Delete a file")
-    print("4. Check if a file is present")
-    print("5. Update a file.")
-    print("6. Get a list of all the files for an user")
-    print("7. Send a file 100 times")
-    print("===================================")
-    option = input("Please choose an option.")
+    while True:
+        print("===================================")
+        print("1. Upload a file")
+        print("2. Download a file.")
+        print("3. Delete a file")
+        # print("4. Check if a file is present")
+        # print("5. Update a file.")
+        print("4. Get a list of all the files for an user")
+        # print("7. Send a file 100 times")
+        print("5. Exit")
+        print("===================================")
+        option = input("Please choose an option.")
 
-    if(option=='1'):
-        uploadTheFile(stub)
-    elif(option=='2'):
-        downloadTheFile(stub)
-    elif(option=='3'):
-        deleteTheFile(stub)
-    elif(option=='4'):
-        isFilePresent(stub)
-    elif(option=='5'):
-        updateFile(stub)
-    elif(option=='6'):
-        getListOfAllTheFilesForTheUser(stub)
-    elif(option=='7'):
-        sendFileMultipleTimes(stub)
+        if(option=='1'):
+            uploadTheFile(stub)
+        elif(option=='2'):
+            downloadTheFile(stub)
+        elif(option=='3'):
+            deleteTheFile(stub)
+        # elif(option=='4'):
+        #     isFilePresent(stub)
+        # elif(option=='5'):
+        #     updateFile(stub)
+        elif(option=='4'):
+            getListOfAllTheFilesForTheUser(stub)
+        elif(option=='5'):
+            # sendFileMultipleTimes(stub)
+            break
 
 def run_client(serverAddress):
     with grpc.insecure_channel(serverAddress) as channel:

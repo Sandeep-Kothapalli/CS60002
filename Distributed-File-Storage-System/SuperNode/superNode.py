@@ -161,17 +161,19 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
     #  
     def replicateData(self,stub, username, filename, data):
         
-        def streamData(username, filename, data):
-            chunk_size = 4000000
-            start, end = 0, chunk_size
-            while(True):
-                chunk = data[start:end]
-                if(len(chunk)==0): break
-                start=end
-                end += chunk_size
-                yield fileService_pb2.FileData(username=username, filename=filename, data=chunk)
+        # def streamData(username, filename, data):
+        #     chunk_size = 4000000
+        #     start, end = 0, chunk_size
+        #     while(True):
+        #         chunk = data[start:end]
+        #         if(len(chunk)==0): break
+        #         start=end
+        #         end += chunk_size
+        #         yield fileService_pb2.FileData(username=username, filename=filename, data=chunk)
+
+        req = fileService_pb2.FileData(username=username, filename=filename, data=data)
             
-        resp = stub.UploadFile(streamData(username,filename,data))
+        resp = stub.UploadFile(req)
 
 
     #
@@ -181,36 +183,44 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         print("In FileDelete")
 
         if(self.fileExists(request.username, request.filename)==False):
-            return fileService_pb2.ack(success=False, message="File {} does not exist.".format(request.filename))
+            return fileService_pb2.ack(success=False, message="File {} does not exist for user {}.".format(request.filename, request.username))
 
         fileMeta = db.parseMetaData(request.username, request.filename)
         print("FileMeta = ", fileMeta)
 
         primaryIP, replicaIP = -1,-1
         channel1, channel2 = -1,-1
-        if(fileMeta[0] in self.clusterLeaders): 
-            primaryIP = self.clusterLeaders[fileMeta[0]]
-            channel1 = self.serverStatus.isChannelAlive(primaryIP)
+        # if(fileMeta[0] in self.clusterLeaders): 
+        #     primaryIP = self.clusterLeaders[fileMeta[0]]
+        #     channel1 = self.serverStatus.isChannelAlive(primaryIP)
+        primaryIP = fileMeta[0]
+        channel1 = self.serverStatus.isChannelAlive(primaryIP)
             
-        if(fileMeta[1] in self.clusterLeaders):
-            replicaIP = self.clusterLeaders[fileMeta[1]]
-            channel2 = self.serverStatus.isChannelAlive(replicaIP)
+        # if(fileMeta[1] in self.clusterLeaders):
+        #     replicaIP = self.clusterLeaders[fileMeta[1]]
+        #     channel2 = self.serverStatus.isChannelAlive(replicaIP)
+        replicaIP = fileMeta[1]
+        channel2 = self.serverStatus.isChannelAlive(replicaIP)
         
-        print("PrimarIP={}, replicaIP={}".format(primaryIP,replicaIP))
+        
+        print("PrimaryIP={}, replicaIP={}".format(primaryIP,replicaIP))
 
-        if(channel1!=-1):
+        if(channel1):
             stub = fileService_pb2_grpc.FileserviceStub(channel1)
-            response = stub.FileDelete(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
+            response1 = stub.FileDelete(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
         
-        if(channel2!=-1):
+        if(channel2):
             stub = fileService_pb2_grpc.FileserviceStub(channel2)
-            response = stub.FileDelete(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
+            response2 = stub.FileDelete(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
 
-        if(response.success==True):
+        if(response1.success==True and response2.success == True):
             db.deleteEntry(request.username + "_" + request.filename)
-            return fileService_pb2.ack(success=True, message="File successfully deleted from cluster : " + fileMeta[0])
+            return fileService_pb2.ack(success=True, message="File successfully deleted from both primary and replica : ")
         else:
-            return fileService_pb2.ack(success=False, message="Internal error")
+            if response1.success == False:
+                return fileService_pb2.ack(success=False, message="Primary delete error")
+            else:
+                return fileService_pb2.ack(success=False, message="Replica delete error")
             
     #
     #   This services is invoked when user wants to check if a file exists

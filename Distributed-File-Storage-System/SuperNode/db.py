@@ -27,8 +27,8 @@ def getUserFiles(username):
     if len(list_of_keys) == 0:
         return ""
     
-    print("list of keys is ", list_of_keys)
-    filenames = [fname[len(username)+1:] for fname in list_of_keys]
+    # print("list of keys is ", list_of_keys)
+    filenames = [str(fname)[len(username)+3:-1] for fname in list_of_keys]
 
     return "\n".join(filenames)
 

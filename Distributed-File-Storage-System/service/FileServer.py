@@ -128,11 +128,11 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
 
         # After saving the chunk in the local DB, make a gRPC call to save the replica of the chunk on different 
         # node only if the replicaNode is present.
-        if(request.replicaNode!=""):
-            print("Sending replication to ", request.replicaNode)
-            replica_channel = active_ip_channel_dict[request.replicaNode]
-            t1 = Thread(target=self.replicateChunkData, args=(replica_channel, dataToBeSaved, username, filename, sequenceNumberOfChunk ,))
-            t1.start()
+        # if(request.replicaNode!=""):
+        #     print("Sending replication to ", request.replicaNode)
+        #     replica_channel = active_ip_channel_dict[request.replicaNode]
+        #     t1 = Thread(target=self.replicateChunkData, args=(replica_channel, dataToBeSaved, username, filename, sequenceNumberOfChunk ,))
+        #     t1.start()
             # stub = fileService_pb2_grpc.FileserviceStub(replica_channel)
             # response = stub.UploadFile(self.sendDataInStream(dataToBeSaved, username, filename, sequenceNumberOfChunk, ""))
 
@@ -340,40 +340,43 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         username = request.username
         filename = request.filename
 
-        if(int(db.get("primaryStatus"))==1):
+        # if(int(db.get("primaryStatus"))==1):
 
-            if(self.fileExists(username, filename)==0):
-                print("File does not exist")
-                return fileService_pb2.ack(success=False, message="File does not exist")
+        #     if(self.fileExists(username, filename)==0):
+        #         print("File does not exist")
+        #         return fileService_pb2.ack(success=False, message="File does not exist")
 
-            print("Fetching metadata from leader")
-            metadata = db.parseMetaData(request.username, request.filename)
-            print("Successfully retrieved metadata from leader")
+        #     print("Fetching metadata from leader")
+        #     metadata = db.parseMetaData(request.username, request.filename)
+        #     print("Successfully retrieved metadata from leader")
 
-            deleteHelper = DeleteHelper(self.hostname, self.serverPort, self.activeNodesChecker)
-            deleteHelper.deleteFileChunksAndMetaFromNodes(username, filename, metadata)
+        #     deleteHelper = DeleteHelper(self.hostname, self.serverPort, self.activeNodesChecker)
+        #     deleteHelper.deleteFileChunksAndMetaFromNodes(username, filename, metadata)
 
-            return fileService_pb2.ack(success=True, message="Successfully deleted file from the cluster")
+        #     return fileService_pb2.ack(success=True, message="Successfully deleted file from the cluster")
 
-        else:
-            seqNo = -1
+        # else:
+        # seqNo = -1
 
-            try:
-                seqNo = request.seqNo
-            except:
-                return fileService_pb2.ack(success=False, message="Internal Error")
+        # try:
+        #     seqNo = request.seqNo
+        # except:
+        #     return fileService_pb2.ack(success=False, message="Internal Error")
 
-            metaDataKey = username+"_"+filename 
-            dataChunkKey = username+"_"+filename+"_"+str(seqNo)
+        # metaDataKey = username+"_"+filename 
+        # dataChunkKey = username+"_"+filename+"_"+str(seqNo)
 
-            if(db.keyExists(metaDataKey)==1):
-                print("FileDelete: Deleting the metadataEntry from local db :")
-                db.deleteEntry(metaDataKey)
-            if(db.keyExists(dataChunkKey)):
-                print("FileDelete: Deleting the data chunk from local db: ")
-                db.deleteEntry(dataChunkKey)
+        # if(db.keyExists(metaDataKey)==1):
+        #     print("FileDelete: Deleting the metadataEntry from local db :")
+        #     db.deleteEntry(metaDataKey)
+        # if(db.keyExists(dataChunkKey)):
+        #     print("FileDelete: Deleting the data chunk from local db: ")
+        #     db.deleteEntry(dataChunkKey)
 
-            return fileService_pb2.ack(success=True, message="Successfully deleted file from the cluster")
+        key = username + "_" + filename
+        db.deleteEntry(key)
+
+        return fileService_pb2.ack(success=True, message="Successfully deleted file from the cluster")
 
     #
     #   This service gets invoked when user wants to check if the file is present.
