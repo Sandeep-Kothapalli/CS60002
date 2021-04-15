@@ -21,7 +21,16 @@ def deleteEntry(key):
     r.delete(key)
 
 def getUserFiles(username):
-    return r.get(username).decode('utf-8')
+    # return r.get(username).decode('utf-8')
+    list_of_keys = r.keys(pattern=f"{username}_*")
+
+    if len(list_of_keys) == 0:
+        return ""
+    
+    print("list of keys is ", list_of_keys)
+    filenames = [fname[len(username)+1:] for fname in list_of_keys]
+
+    return "\n".join(filenames)
 
 def saveUserFile(username, filename):
     key = username + "_" + filename
