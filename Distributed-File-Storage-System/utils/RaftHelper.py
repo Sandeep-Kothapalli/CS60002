@@ -51,7 +51,7 @@ class RaftHelper():
         isLeaderUpdated = False
         
         while True:
-            time.sleep(0.5)
+            time.sleep(2)
             if raftInstance.getCounter() != old_value:
                 old_value = raftInstance.getCounter()
             if raftInstance._getLeader() is None:
@@ -99,7 +99,7 @@ class RaftHelper():
         try:
             channel = grpc.insecure_channel('{}'.format(self.superNodeAddress))
             stub = fileService_pb2_grpc.FileserviceStub(channel)
-            response = stub.getLeaderInfo(fileService_pb2.ClusterInfo(ip = self.hostname, port= self.serverPort, clusterName="team1"))
+            response = stub.getLeaderInfo(fileService_pb2.ClusterInfo(ip = self.hostname, port= self.serverPort, clusterName="cluster1"))
             print(response.message)
         except:
             print("Not able to connect to supernode")

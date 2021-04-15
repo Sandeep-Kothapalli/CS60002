@@ -55,6 +55,8 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
             node = neighbors[node]
         
         node_replica = neighbors[node]
+        if self.serverStatus.isChannelAlive(node_replica) == False:
+            node_replica = neighbors[node_replica]
        
         # if(node==-1):
         #     return fileService_pb2.ack(success=False, message="No Active Clusters.")
@@ -213,48 +215,54 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
             stub = fileService_pb2_grpc.FileserviceStub(channel2)
             response2 = stub.FileDelete(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
 
-        if(response1.success==True and response2.success == True):
-            db.deleteEntry(request.username + "_" + request.filename)
-            return fileService_pb2.ack(success=True, message="File successfully deleted from both primary and replica : ")
+        db.deleteEntry(request.username + "_" + request.filename)
+
+        if(channel1 and response1.success==True and channel2 and response2.success == True):
+        	return fileService_pb2.ack(success=True, message="File successfully deleted from both primary and replica : ")
         else:
-            if response1.success == False:
-                return fileService_pb2.ack(success=False, message="Primary delete error")
-            else:
-                return fileService_pb2.ack(success=False, message="Replica delete error")
+        	if not channel1:
+            		return fileService_pb2.ack(success=False, message="Primary Server Down")
+        	elif response1.success == False:
+           		return fileService_pb2.ack(success=False, message="Primary Delete Failed")
+        	elif not channel2:
+            		return fileService_pb2.ack(success=False, message="Replica Server Down")
+        	else:
+            		return fileService_pb2.ack(success=False, message="Replica Delete Failed")
             
     #
     #   This services is invoked when user wants to check if a file exists
     #  
-    def FileSearch(self, request, context):
+    
+    # def FileSearch(self, request, context):
 
-        if(self.fileExists(request.username, request.filename)==False):
-            return fileService_pb2.ack(success=False, message="File {} does not exist.".format(request.filename))
+    #     if(self.fileExists(request.username, request.filename)==False):
+    #         return fileService_pb2.ack(success=False, message="File {} does not exist.".format(request.filename))
 
-        fileMeta = db.parseMetaData(request.username, request.filename)
+    #     fileMeta = db.parseMetaData(request.username, request.filename)
 
-        primaryIP, replicaIP = -1,-1
-        channel1, channel2 = -1,-1
+    #     primaryIP, replicaIP = -1,-1
+    #     channel1, channel2 = -1,-1
 
-        if(fileMeta[0] in self.clusterLeaders): 
-            primaryIP = self.clusterLeaders[fileMeta[0]]
-            channel1 = self.serverStatus.isChannelAlive(primaryIP)
+    #     if(fileMeta[0] in self.clusterLeaders): 
+    #         primaryIP = self.clusterLeaders[fileMeta[0]]
+    #         channel1 = self.serverStatus.isChannelAlive(primaryIP)
             
-        if(fileMeta[1] in self.clusterLeaders):
-            replicaIP = self.clusterLeaders[fileMeta[1]]
-            channel2 = self.serverStatus.isChannelAlive(replicaIP)
+    #     if(fileMeta[1] in self.clusterLeaders):
+    #         replicaIP = self.clusterLeaders[fileMeta[1]]
+    #         channel2 = self.serverStatus.isChannelAlive(replicaIP)
 
-        if(channel1 != -1):
-            stub = fileService_pb2_grpc.FileserviceStub(channel1)
-            response = stub.FileSearch(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
+    #     if(channel1 != -1):
+    #         stub = fileService_pb2_grpc.FileserviceStub(channel1)
+    #         response = stub.FileSearch(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
 
-        if(channel2 != -1):
-            stub = fileService_pb2_grpc.FileserviceStub(channel2)
-            response = stub.FileSearch(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
+    #     if(channel2 != -1):
+    #         stub = fileService_pb2_grpc.FileserviceStub(channel2)
+    #         response = stub.FileSearch(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
         
-        if(response.success==True):
-            return fileService_pb2.ack(success=True, message="File exists! ")
-        else:
-            return fileService_pb2.ack(success=False, message="File does not exist in any cluster.")
+    #     if(response.success==True):
+    #         return fileService_pb2.ack(success=True, message="File exists! ")
+    #     else:
+    #         return fileService_pb2.ack(success=False, message="File does not exist in any cluster.")
 
     #
     #   This services lists all files under a user

@@ -94,46 +94,46 @@ def deleteTheFile(stub):
     response = stub.FileDelete(fileService_pb2.FileInfo(username=userName, filename=fileName))
     print(response.message)
 
-def isFilePresent(stub):
-    userName = input("Enter Username: ")
-    fileName = input("Enter file name: ")
-    response = stub.FileSearch(fileService_pb2.FileInfo(username=userName, filename=fileName))
+# def isFilePresent(stub):
+#     userName = input("Enter Username: ")
+#     fileName = input("Enter file name: ")
+#     response = stub.FileSearch(fileService_pb2.FileInfo(username=userName, filename=fileName))
 
-    if(response.success==True):
-        print(response.message)
-    else:
-        print(response.message)
+#     if(response.success==True):
+#         print(response.message)
+#     else:
+#         print(response.message)
 
-def sendFileInChunks(username, filename, i):
-     # Maximum chunk size that can be sent
-    CHUNK_SIZE=4000000
+# def sendFileInChunks(username, filename, i):
+#      # Maximum chunk size that can be sent
+#     CHUNK_SIZE=4000000
 
-    outfile = os.path.join('files', fileName)
+#     outfile = os.path.join('files', fileName)
     
-    with open(outfile, 'rb') as infile:
-        while True:
-            chunk = infile.read(CHUNK_SIZE)
-            if not chunk: break
-            yield fileService_pb2.FileData(username=username+"_"+str(i), filename=fileName, data=chunk, seqNo=1)
+#     with open(outfile, 'rb') as infile:
+#         while True:
+#             chunk = infile.read(CHUNK_SIZE)
+#             if not chunk: break
+#             yield fileService_pb2.FileData(username=username+"_"+str(i), filename=fileName, data=chunk, seqNo=1)
 
-def sendFileMultipleTimes(stub):
-    userName = input("Enter Username: ")
-    fileName = input("Enter file name: ")
-    numberOfTimes = input("How many times you want to send this file?")
+# def sendFileMultipleTimes(stub):
+#     userName = input("Enter Username: ")
+#     fileName = input("Enter file name: ")
+#     numberOfTimes = input("How many times you want to send this file?")
 
-    for i in range(1, numberOfTimes+1):
-        response = stub.UploadFile(sendFileInChunks(userName, fileName, i))
-        if(response.success): 
-            print("File successfully Uploaded for sequence : ", str(i))
-        else:
-            print("Failed to upload for sequence : ", str(i))
+#     for i in range(1, numberOfTimes+1):
+#         response = stub.UploadFile(sendFileInChunks(userName, fileName, i))
+#         if(response.success): 
+#             print("File successfully Uploaded for sequence : ", str(i))
+#         else:
+#             print("Failed to upload for sequence : ", str(i))
 
-def updateFile(stub):
-    response = stub.UpdateFile(getFileChunks())
-    if(response.success): 
-            print("File successfully updated")
-    else:
-        print("Failed to update the file")
+# def updateFile(stub):
+#     response = stub.UpdateFile(getFileData())
+#     if(response.success): 
+#             print("File successfully updated")
+#     else:
+#         print("Failed to update the file")
 
 def getListOfAllTheFilesForTheUser(stub):
     userName = input("Enter Username: ")
@@ -186,5 +186,5 @@ def run_client(serverAddress):
 
 if __name__ == '__main__':
     # server_addresses = ['18.224.22.150', '3.21.159.167']
-    server_addresses = ['172.16.45.131:50051']
+    server_addresses = ['10.160.0.12:50051']
     run_client(random.choice(server_addresses))

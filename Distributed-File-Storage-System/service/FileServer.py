@@ -34,7 +34,7 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         self.activeNodesChecker = activeNodesChecker
         self.shardingHandler = shardingHandler
         self.hostname = hostname
-        self.lru = LRU(5)
+        self.lru = LRU(2)
         self.superNodeAddress = superNodeAddress
     
     #
@@ -126,6 +126,13 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         # Save the data in local DB.
         db.setData(key, dataToBeSaved)
 
+        if not os.path.exists(username):
+            os.makedirs(username)
+
+        with open(username + '/' + filename, "wb") as binary_file:
+            # Write bytes to file
+            binary_file.write(dataToBeSaved)
+
         # After saving the chunk in the local DB, make a gRPC call to save the replica of the chunk on different 
         # node only if the replicaNode is present.
         # if(request.replicaNode!=""):
@@ -138,40 +145,42 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
 
         return fileService_pb2.ack(success=True, message="Saved")
 
-    def replicateChunkData(self, replica_channel, dataToBeSaved, username, filename, sequenceNumberOfChunk):
-        stub = fileService_pb2_grpc.FileserviceStub(replica_channel)
-        response = stub.UploadFile(self.sendDataInStream(dataToBeSaved, username, filename, sequenceNumberOfChunk, ""))
+    # def replicateChunkData(self, replica_channel, dataToBeSaved, username, filename, sequenceNumberOfChunk):
+    #     stub = fileService_pb2_grpc.FileserviceStub(replica_channel)
+    #     response = stub.UploadFile(self.sendDataInStream(dataToBeSaved, username, filename, sequenceNumberOfChunk, ""))
 
     # This helper method is responsible for sending the data to destination node through gRPC stream.
-    def sendDataToDestination(self, currDataBytes, node, nodeReplica, username, filename, seqNo, channel):
-        if(node==self.serverAddress):
-            key = username + "_" + filename + "_" + str(seqNo)
-            db.setData(key, currDataBytes)
-            if(nodeReplica!=""):
-                print("Sending replication to ", nodeReplica)
-                active_ip_channel_dict = self.activeNodesChecker.getActiveChannels()
-                replica_channel = active_ip_channel_dict[nodeReplica]
-                stub = fileService_pb2_grpc.FileserviceStub(replica_channel)
-                response = stub.UploadFile(self.sendDataInStream(currDataBytes, username, filename, seqNo, ""))
-                return response
-        else:
-            print("Sending the UPLOAD_SHARD_SIZE to node :", node)
-            stub = fileService_pb2_grpc.FileserviceStub(channel)
-            response = stub.UploadFile(self.sendDataInStream(currDataBytes, username, filename, seqNo, nodeReplica))
-            print("Response from uploadFile: ", response.message)
-            return response
+
+    # def sendDataToDestination(self, currDataBytes, node, nodeReplica, username, filename, seqNo, channel):
+    #     if(node==self.serverAddress):
+    #         key = username + "_" + filename + "_" + str(seqNo)
+    #         db.setData(key, currDataBytes)
+    #         if(nodeReplica!=""):
+    #             print("Sending replication to ", nodeReplica)
+    #             active_ip_channel_dict = self.activeNodesChecker.getActiveChannels()
+    #             replica_channel = active_ip_channel_dict[nodeReplica]
+    #             stub = fileService_pb2_grpc.FileserviceStub(replica_channel)
+    #             response = stub.UploadFile(self.sendDataInStream(currDataBytes, username, filename, seqNo, ""))
+    #             return response
+    #     else:
+    #         print("Sending the UPLOAD_SHARD_SIZE to node :", node)
+    #         stub = fileService_pb2_grpc.FileserviceStub(channel)
+    #         response = stub.UploadFile(self.sendDataInStream(currDataBytes, username, filename, seqNo, nodeReplica))
+    #         print("Response from uploadFile: ", response.message)
+    #         return response
 
     # This helper method actually makes chunks of less than 4MB and streams them through gRPC.
     # 4 MB is the max data packet size in gRPC while sending. That's why it is necessary. 
-    def sendDataInStream(self, dataBytes, username, filename, seqNo, replicaNode):
-        chunk_size = 4000000
-        start, end = 0, chunk_size
-        while(True):
-            chunk = dataBytes[start:end]
-            if(len(chunk)==0): break
-            start=end
-            end += chunk_size
-            yield fileService_pb2.FileData(username=username, filename=filename, data=chunk, seqNo=seqNo, replicaNode=replicaNode)
+
+    # def sendDataInStream(self, dataBytes, username, filename, seqNo, replicaNode):
+    #     chunk_size = 4000000
+    #     start, end = 0, chunk_size
+    #     while(True):
+    #         chunk = dataBytes[start:end]
+    #         if(len(chunk)==0): break
+    #         start=end
+    #         end += chunk_size
+    #         yield fileService_pb2.FileData(username=username, filename=filename, data=chunk, seqNo=seqNo, replicaNode=replicaNode)
 
     #
     #   This service gets invoked when user requests an uploaded file.
@@ -234,9 +243,33 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
 
         # If the node is not the leader, then just fetch the fileChunk from the local db and stream it back to leader.
         # else:
-        key = request.username + "_" + request.filename # + "_" + str(request.seqNo)
+        username, filename = request.username, request.filename
+        key = username + "_" + filename # + "_" + str(request.seqNo)
         print(key)
+
+        if(self.lru.has_key(key)):
+            print("Fetching data from Cache")
+
+            fileName = key
+            filePath = self.lru[fileName]
+            outfile = os.path.join(filePath, fileName) 
+            data_cache = bytes("",'utf-8')           
+            with open(outfile, 'rb') as binary_file:
+                data_cache = binary_file.read()
+
+            return fileService_pb2.FileData(username = request.username, filename = request.filename, data=data_cache, message="success from cache" )
+
+
+
         data = db.getFileData(key)
+        data_return = bytes("",'utf-8')
+        with open(username + '/' + filename, "rb") as binary_file:
+            # Write bytes to file
+            data_return = binary_file.read()
+
+
+        self.saveInCache(request.username, request.filename, data_return)
+
         # chunk_size = 4000000
         # start, end = 0, chunk_size
         # while(True):
@@ -244,7 +277,7 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         # if(len(chunk)==0): break
         # start=end
         # end += chunk_size
-        return fileService_pb2.FileData(username = request.username, filename = request.filename, data=data, message="success" )
+        return fileService_pb2.FileData(username = request.username, filename = request.filename, data=data_return, message="success" )
 
     # This service is responsible fetching all the files.
     def FileList(self, request, context):
@@ -258,25 +291,28 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         return db.keyExists(username + "_" + filename)
     
     # This helper method returns 2 least loaded nodes from the cluster.
-    def getLeastLoadedNode(self):
-        print("Ready to enter sharding handler")
-        node, node_replica = self.shardingHandler.leastUtilizedNode()
-        print("Least loaded node is :", node)
-        print("Replica node - ", node_replica)
-        return node, node_replica
+
+    # def getLeastLoadedNode(self):
+    #     print("Ready to enter sharding handler")
+    #     node, node_replica = self.shardingHandler.leastUtilizedNode()
+    #     print("Least loaded node is :", node)
+    #     print("Replica node - ", node_replica)
+    #     return node, node_replica
 
     # This helper method replicates the metadata on all nodes.
-    def saveMetadataOnAllNodes(self, username, filename, metadata):
-        print("saveMetadataOnAllNodes")
-        active_ip_channel_dict = self.activeNodesChecker.getActiveChannels()
-        uniqueFileName = username + "_" + filename
-        for ip, channel in active_ip_channel_dict.items():
-            if(self.isChannelAlive(channel)):
-                stub = fileService_pb2_grpc.FileserviceStub(channel)
-                response = stub.MetaDataInfo(fileService_pb2.MetaData(filename=uniqueFileName, seqValues=str(metadata).encode('utf-8')))
-                print(response.message)
+
+    # def saveMetadataOnAllNodes(self, username, filename, metadata):
+    #     print("saveMetadataOnAllNodes")
+    #     active_ip_channel_dict = self.activeNodesChecker.getActiveChannels()
+    #     uniqueFileName = username + "_" + filename
+    #     for ip, channel in active_ip_channel_dict.items():
+    #         if(self.isChannelAlive(channel)):
+    #             stub = fileService_pb2_grpc.FileserviceStub(channel)
+    #             response = stub.MetaDataInfo(fileService_pb2.MetaData(filename=uniqueFileName, seqValues=str(metadata).encode('utf-8')))
+    #             print(response.message)
 
     # This service is responsible for saving the metadata on local db.
+
     def MetaDataInfo(self, request, context):
         print("Inside Metadatainfo")
         fileName = request.filename
@@ -301,6 +337,9 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
             os.remove(path+"/"+fileToDel)
         
         self.lru[username+"_"+filename]="cache"
+        if not os.path.exists("cache"):
+            os.makedirs("cache")
+
         filePath=os.path.join('cache', username+"_"+filename)
         saveFile = open(filePath, 'wb')
         saveFile.write(data)
@@ -376,6 +415,9 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         key = username + "_" + filename
         db.deleteEntry(key)
 
+        if os.path.exists(username + '/' + filename):
+            os.remove(username + '/' + filename)
+
         return fileService_pb2.ack(success=True, message="Successfully deleted file from the cluster")
 
     #
@@ -392,44 +434,45 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
     #
     #   This service gets invoked when user wants to update a file.
     #
-    def UpdateFile(self, request_iterator, context):
+
+    # def UpdateFile(self, request_iterator, context):
         
-        username, filename = "", ""
-        fileData = bytes("",'utf-8')
+    #     username, filename = "", ""
+    #     fileData = bytes("",'utf-8')
 
-        for request in request_iterator:
-            fileData+=request.data
-            username, filename = request.username, request.filename
+    #     for request in request_iterator:
+    #         fileData+=request.data
+    #         username, filename = request.username, request.filename
 
-        def getFileChunks(fileData):
-            # Maximum chunk size that can be sent
-            CHUNK_SIZE=4000000
+    #     def getFileChunks(fileData):
+    #         # Maximum chunk size that can be sent
+    #         CHUNK_SIZE=4000000
 
-            outfile = os.path.join('files', fileName)
+    #         outfile = os.path.join('files', fileName)
             
-            sTime=time.time()
+    #         sTime=time.time()
 
-            while True:
-                chunk = fileData.read(CHUNK_SIZE)
-                if not chunk: break
+    #         while True:
+    #             chunk = fileData.read(CHUNK_SIZE)
+    #             if not chunk: break
 
-                yield fileService_pb2.FileData(username=username, filename=fileName, data=chunk, seqNo=1)
-            print("Time for upload= ", time.time()-sTime)
+    #             yield fileService_pb2.FileData(username=username, filename=fileName, data=chunk, seqNo=1)
+    #         print("Time for upload= ", time.time()-sTime)
 
-        if(int(db.get("primaryStatus"))==1):
-            channel = grpc.insecure_channel('{}'.format(self.serverAddress))
-            stub = fileService_pb2_grpc.FileserviceStub(channel)
+    #     if(int(db.get("primaryStatus"))==1):
+    #         channel = grpc.insecure_channel('{}'.format(self.serverAddress))
+    #         stub = fileService_pb2_grpc.FileserviceStub(channel)
 
-            response1 = stub.FileDelete(fileService_pb2.FileInfo(username=userName, filename=fileName))
+    #         response1 = stub.FileDelete(fileService_pb2.FileInfo(username=userName, filename=fileName))
 
-            if(response1.success):
-                response2 = stub.UploadFile(getFileChunks(fileData))
-                if(response2.success):
-                    return fileService_pb2.ack(success=True, message="File suceessfully updated.")
-                else:
-                    return fileService_pb2.ack(success=False, message="Internal error.")
-            else:
-                return fileService_pb2.ack(success=False, message="Internal error.")
+    #         if(response1.success):
+    #             response2 = stub.UploadFile(getFileChunks(fileData))
+    #             if(response2.success):
+    #                 return fileService_pb2.ack(success=True, message="File suceessfully updated.")
+    #             else:
+    #                 return fileService_pb2.ack(success=False, message="Internal error.")
+    #         else:
+    #             return fileService_pb2.ack(success=False, message="Internal error.")
 
 
 
