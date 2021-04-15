@@ -32,7 +32,7 @@ def run_server(hostname, server_port, raft_port, super_node_address):
     #  Restricts the instantiation of a class to one "single" instance.
     activeNodesChecker = ActiveNodesChecker()
     shardingHandler = ShardingHandler(activeNodesChecker)
-    #raftHelper = RaftHelper(hostname, server_port, raft_port, activeNodesChecker, super_node_address)
+    raftHelper = RaftHelper(hostname, server_port, raft_port, activeNodesChecker, super_node_address)
 
     # Declare the gRPC server with 10 max_workers
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
@@ -47,16 +47,16 @@ def run_server(hostname, server_port, raft_port, super_node_address):
     server.add_insecure_port('[::]:{}'.format(server_port))
     server.start()
 
-    #print("Starting raft")
+    print("Starting raft")
 
     # Start raft utility on separate thread.
-    #t1 = Thread(target=RaftHelper.startRaftServer, args=(raftHelper,))
+    t1 = Thread(target=RaftHelper.startRaftServer, args=(raftHelper,))
 
     # Start activeNodeChecker utility on separate thread.
     t2 = Thread(target=ActiveNodesChecker.readAvailableIPAddresses, args=(activeNodesChecker,))
 
     t2.start()
-    #t1.start()
+    t1.start()
 
     print("Both threads have been started")
 
