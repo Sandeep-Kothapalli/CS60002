@@ -26,7 +26,7 @@ def getFileData():
 
     outfile = os.path.join(INPUT_DIR, fileName)
     file_data = open(outfile, 'rb').read()
-    fileData = fileService_pb2.FileData(username=username,fileName=fileName, data=file_data)
+    fileData = fileService_pb2.FileData(username=username,filename=fileName, data=file_data)
 
     print("Time for upload= ", time.time()-sTime)
     return fileData
@@ -174,5 +174,6 @@ def run_client(serverAddress):
 
 
 if __name__ == '__main__':
-    server_addresses = ['18.224.22.150', '3.21.159.167']
+    # server_addresses = ['18.224.22.150', '3.21.159.167']
+    server_addresses = ['18.224.22.150']
     run_client(random.choice(server_addresses))
