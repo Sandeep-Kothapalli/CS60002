@@ -14,7 +14,7 @@ class FileserviceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.UploadFile = channel.stream_unary(
+        self.UploadFile = channel.unary_unary(
                 '/fileservice.Fileservice/UploadFile',
                 request_serializer=fileService__pb2.FileData.SerializeToString,
                 response_deserializer=fileService__pb2.ack.FromString,
@@ -64,7 +64,7 @@ class FileserviceStub(object):
 class FileserviceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def UploadFile(self, request_iterator, context):
+    def UploadFile(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -121,7 +121,7 @@ class FileserviceServicer(object):
 
 def add_FileserviceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'UploadFile': grpc.stream_unary_rpc_method_handler(
+            'UploadFile': grpc.unary_unary_rpc_method_handler(
                     servicer.UploadFile,
                     request_deserializer=fileService__pb2.FileData.FromString,
                     response_serializer=fileService__pb2.ack.SerializeToString,
@@ -177,7 +177,7 @@ class Fileservice(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def UploadFile(request_iterator,
+    def UploadFile(request,
             target,
             options=(),
             channel_credentials=None,
@@ -187,7 +187,7 @@ class Fileservice(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.stream_unary(request_iterator, target, '/fileservice.Fileservice/UploadFile',
+        return grpc.experimental.unary_unary(request, target, '/fileservice.Fileservice/UploadFile',
             fileService__pb2.FileData.SerializeToString,
             fileService__pb2.ack.FromString,
             options, channel_credentials,

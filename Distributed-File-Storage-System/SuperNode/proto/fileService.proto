@@ -4,7 +4,7 @@ package fileservice;
 
 service Fileservice {
 	
-	rpc UploadFile (stream FileData) returns (ack);
+	rpc UploadFile (FileData) returns (ack);
 	rpc DownloadFile (FileInfo) returns (stream FileData);
 	rpc FileSearch (FileInfo) returns (ack);
 	rpc ReplicateFile (stream FileData) returns (ack);

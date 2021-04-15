@@ -3,18 +3,20 @@ sys.path.append('./proto')
 from concurrent import futures
 from threading import Thread
 import grpc
+import yaml
     
 import db
 import fileService_pb2_grpc
 import fileService_pb2
 import time
 import threading
+import random
 from ClusterStatus import ServerStatus
 
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
-neighbors = {}
+neighbors = {'172.16.45.132:3000' : '172.16.45.133:3000', '172.16.45.133:3000' : '172.16.45.134:3000', '172.16.45.134:3000' : '172.16.45.132:3000'}
 
 #
 #   *** FileServer Service : FileServer service as per fileService.proto file. ***
@@ -48,7 +50,7 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         
         # Get the two clusters that have the most resources based on cluster stats
         # node, node_replica = self.clusterStatus.leastUtilizedNode(self.clusterLeaders)
-        node = random.choice(neighbors.keys())
+        node = random.choice(list(neighbors.keys()))
         if self.serverStatus.isChannelAlive(node) == False:
             node = neighbors[node]
         
