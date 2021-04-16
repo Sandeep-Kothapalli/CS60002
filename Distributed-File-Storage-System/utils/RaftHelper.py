@@ -49,9 +49,9 @@ class RaftHelper():
         n = 0
         old_value = -1
         isLeaderUpdated = False
-        
+
         while True:
-            time.sleep(2)
+            time.sleep(0.5)
             if raftInstance.getCounter() != old_value:
                 old_value = raftInstance.getCounter()
             if raftInstance._getLeader() is None:
@@ -95,7 +95,7 @@ class RaftHelper():
             db.setData("primaryStatus", 0)
 
     # Method to send newly elected leader info to supernode
-    def sendLeaderInfoToSuperNode(self):        
+    def sendLeaderInfoToSuperNode(self):
         try:
             channel = grpc.insecure_channel('{}'.format(self.superNodeAddress))
             stub = fileService_pb2_grpc.FileserviceStub(channel)
@@ -105,7 +105,7 @@ class RaftHelper():
             print("Not able to connect to supernode")
             pass
 
-        
-        
+
+
 
 
