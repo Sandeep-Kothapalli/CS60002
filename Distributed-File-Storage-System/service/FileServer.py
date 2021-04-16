@@ -18,8 +18,6 @@ import yaml
 import threading
 import hashlib
 from ShardingHandler import ShardingHandler
-from DownloadHelper import DownloadHelper
-from DeleteHelper import DeleteHelper
 from lru import LRU
 
 UPLOAD_SHARD_SIZE = 50 * 1024 * 1024
@@ -61,8 +59,11 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         dataToBeSaved += request.data
         key = username + "_" + filename
 
+        if(self.lru.has_key("cache_" + key) and self.lru["cache_" + key] == "valid"):
+            self.lru["cache_" + key] = "invalid"
+
         # Save the data in redis
-        db.setData(key, dataToBeSaved)
+        # db.setData(key, dataToBeSaved)
 
         # save data in a file
         if not os.path.exists(username):
@@ -80,26 +81,18 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
 
         username, filename = request.username, request.filename
         key = username + "_" + filename
+        cache_key = "cache_" + key
         # print(key)
 
-        if self.lru.has_key(key):
+        if(self.lru.has_key(cache_key) and self.lru[cache_key] == "valid"):
             print("Fetching data from Cache")
 
-            fileName = key
-            filePath = self.lru[fileName]
-            outfile = os.path.join(filePath, fileName)
-            data_cache = bytes("", "utf-8")
-            with open(outfile, "rb") as binary_file:
-                data_cache = binary_file.read()
+            data_cache = db.getFileData(cache_key)
 
-            return fileService_pb2.FileData(
-                username=request.username,
-                filename=request.filename,
-                data=data_cache,
-                message="success from cache",
-            )
+            return fileService_pb2.FileData(username = request.username, filename = request.filename, data=data_cache, message="success from cache" )
 
-        data = db.getFileData(key)
+        
+        # data = db.getFileData(key)
         data_return = bytes("", "utf-8")
         with open(username + "/" + filename, "rb") as binary_file:
             # Write bytes to file
@@ -145,18 +138,16 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
 
     # This helper method is responsible for updating the cache for faster lookup.
     def saveInCache(self, username, filename, data):
-        if len(self.lru.items()) >= self.lru.get_size():
-            fileToDel, path = self.lru.peek_last_item()
-            os.remove(path + "/" + fileToDel)
+        
+        if(len(self.lru.items())>=self.lru.get_size()):
+            file_key, path = self.lru.peek_last_item()
+            if (path == "valid"):
+                db.deleteEntry(file_key)
 
-        self.lru[username + "_" + filename] = "cache"
-        if not os.path.exists("cache"):
-            os.makedirs("cache")
+        cache_key = "cache_" + username + "_" + filename
+        self.lru[cache_key]="valid"
+        db.setCacheData(cache_key, data)
 
-        filePath = os.path.join("cache", username + "_" + filename)
-        saveFile = open(filePath, "wb")
-        saveFile.write(data)
-        saveFile.close()
 
     # This service is responsible for sending the whole cluster stats to superNode
     # def getClusterStats(self, request, context):
@@ -188,15 +179,15 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
 
     # This service is responsible for sending the leader info to superNode as soon as leader changes.
 
-    # def getLeaderInfo(self, request, context):
-    #     channel = grpc.insecure_channel("{}".format(self.superNodeAddress))
-    #     stub = fileService_pb2_grpc.FileserviceStub(channel)
-    #     response = stub.getLeaderInfo(
-    #         fileService_pb2.ClusterInfo(
-    #             ip=self.hostname, port=self.serverPort, clusterName="team1"
-    #         )
-    #     )
-    #     print(response.message)
+    def getLeaderInfo(self, request, context):
+        channel = grpc.insecure_channel("{}".format(self.superNodeAddress))
+        stub = fileService_pb2_grpc.FileserviceStub(channel)
+        response = stub.getLeaderInfo(
+            fileService_pb2.ClusterInfo(
+                ip=self.hostname, port=self.serverPort, clusterName="team1"
+            )
+        )
+        print(response.message)
 
     #   This service gets invoked when user deletes a file.
     def FileDelete(self, request, data):
@@ -204,8 +195,13 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         filename = request.filename
         print("Deleting file : " + filename)
         key = username + "_" + filename
+
+        if(self.lru.has_key("cache_" + key)):
+            self.lru["cache_" + key] = "invalid"
+            db.deleteEntry("cache_" + key)
+
         #delete file from redis
-        db.deleteEntry(key)
+        # db.deleteEntry(key)
 
         if os.path.exists(username + "/" + filename):
             os.remove(username + "/" + filename)
