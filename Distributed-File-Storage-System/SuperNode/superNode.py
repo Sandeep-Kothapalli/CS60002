@@ -68,14 +68,14 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
                     message = self.message_queue[ipaddress].pop(0)
                     stub.FileDelete(message)
 
-    def getLeaderInfo(self, request, context):
-        print("getLeaderInfo Called")
-        address = request.ip + ":" + request.port
-        self.clusterLeaders[request.clusterName] = address
-        print("ClusterLeaders: ", self.clusterLeaders)
-        channel = grpc.insecure_channel("{}".format(address))
-        self.ip_channel_dict[address] = channel
-        return fileService_pb2.ack(success=True, message="Leader Updated.")
+    # def getLeaderInfo(self, request, context):
+    #     print("getLeaderInfo Called")
+    #     address = request.ip + ":" + request.port
+    #     self.clusterLeaders[request.clusterName] = address
+    #     print("ClusterLeaders: ", self.clusterLeaders)
+    #     channel = grpc.insecure_channel("{}".format(address))
+    #     self.ip_channel_dict[address] = channel
+    #     return fileService_pb2.ack(success=True, message="Leader Updated.")
 
     # check if file metadata is in redis
     def fileExists(self, username, filename):
