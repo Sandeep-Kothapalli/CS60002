@@ -38,20 +38,24 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         self.message_queue = {ip1:[], ip2:[], ip3:[]}
         
         self.ip1_delete_consi_thread = Thread(target=self.deleteInconsistentFile, args=(ip1,))
+        self.ip1_delete_consi_thread.start()
         self.ip2_delete_consi_thread = Thread(target=self.deleteInconsistentFile, args=(ip2,))
+        self.ip2_delete_consi_thread.start()
         self.ip3_delete_consi_thread = Thread(target=self.deleteInconsistentFile, args=(ip3,))
+        self.ip3_delete_consi_thread.start()
         
 
     def deleteInconsistentFile(self, ipaddress)
         while True:
             time.sleep(0.5)
             channel = self.serverStatus.isChannelAlive(ipaddress)
-            stub = fileService_pb2_grpc.FileserviceStub(channel)
-
+            
             if channel:
+                stub = fileService_pb2_grpc.FileserviceStub(channel)
                 if len(self.message_queue[ipaddress]) > 0:
+                    print("Deleting Stale Data : " + ipaddress + " after Recovery")
                     message = self.message_queue[ipaddress].pop(0)
-                        stub.FileDelete(message)
+                    stub.FileDelete(message)
 
 
     #
@@ -249,16 +253,16 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         db.deleteEntry(request.username + "_" + request.filename)
 
         if(channel1 and response1.success==True and channel2 and response2.success == True):
-        	return fileService_pb2.ack(success=True, message="File successfully deleted from both primary and replica : ")
+            return fileService_pb2.ack(success=True, message="File successfully deleted from both primary and replica : ")
         else:
-        	if not channel1:
+            if not channel1:
                 return fileService_pb2.ack(success=False, message="Primary Server Down")
         	elif response1.success == False:
-           		return fileService_pb2.ack(success=False, message="Primary Delete Failed")
+        	    return fileService_pb2.ack(success=False, message="Primary Delete Failed")
         	elif not channel2:
-                return fileService_pb2.ack(success=False, message="Replica Server Down")
+        	    return fileService_pb2.ack(success=False, message="Replica Server Down")
         	else:
-                return fileService_pb2.ack(success=False, message="Replica Delete Failed")
+        	    return fileService_pb2.ack(success=False, message="Replica Delete Failed")
             
     #
     #   This services is invoked when user wants to check if a file exists

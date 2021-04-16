@@ -186,5 +186,5 @@ def run_client(serverAddress):
 
 if __name__ == '__main__':
     # server_addresses = ['18.224.22.150', '3.21.159.167']
-    server_addresses = ['10.160.0.12:50051']
+    server_addresses = ['172.16.45.131:50051']
     run_client(random.choice(server_addresses))

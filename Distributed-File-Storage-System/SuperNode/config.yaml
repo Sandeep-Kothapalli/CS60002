@@ -24,31 +24,28 @@
 #  raft_port: 5001
 
 four:
- hostname: 10.160.0.13
+ hostname: 172.16.45.132
  server_port : 3000
  raft_port : 3001
  #connection_port : [4001, 5001]
  primary : 1
- mongodb_url: "mongodb://localhost:27017"
 
 
 five:
- hostname: 10.148.0.2
+ hostname: 172.16.45.133
  server_port : 3000
  primary : 0
- mongodb_url: "mongodb://localhost:27017"
  raft_port: 3001
 
 
 six:
- hostname: 10.146.0.2
+ hostname: 172.16.45.134
  server_port : 3000
  primary : 0
- mongodb_url: "mongodb://localhost:27017"
  raft_port: 3001
 
 LRUCapacity: 5
 
 UPLOAD_SHARD_SIZE: 52428800
 
-super_node_address: "10.160.0.12:50051"
+super_node_address: "172.16.45.131:50051"

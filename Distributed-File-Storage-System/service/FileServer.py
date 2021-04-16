@@ -34,7 +34,7 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         self.activeNodesChecker = activeNodesChecker
         self.shardingHandler = shardingHandler
         self.hostname = hostname
-        self.lru = LRU(2)
+        self.lru = LRU(3)
         self.superNodeAddress = superNodeAddress
     
     #
@@ -411,13 +411,13 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         # if(db.keyExists(dataChunkKey)):
         #     print("FileDelete: Deleting the data chunk from local db: ")
         #     db.deleteEntry(dataChunkKey)
-
+        print("Deleting file : " + filename)
         key = username + "_" + filename
         db.deleteEntry(key)
 
         if os.path.exists(username + '/' + filename):
             os.remove(username + '/' + filename)
-
+        print("Deleted File")
         return fileService_pb2.ack(success=True, message="Successfully deleted file from the cluster")
 
     #
