@@ -11,12 +11,18 @@ import fileService_pb2
 import time
 import threading
 import random
+import time
 from ClusterStatus import ServerStatus
 
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
-neighbors = {'10.160.0.13:3000' : '10.148.0.2:3000', '10.148.0.2:3000' : '10.146.0.2.134:3000', '10.146.0.2:3000' : '10.160.0.13:3000'}
+with open("../iptable.txt") as iptable:
+    ip1 = iptable.readline()
+    ip2 = iptable.readline()
+    ip3 = iptable.readline()
+
+neighbors = {ip1 : ip2, ip2 : ip3, ip3 : ip1}
 
 #
 #   *** FileServer Service : FileServer service as per fileService.proto file. ***
@@ -28,6 +34,25 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         self.clusterLeaders = {}
         self.serverStatus = ServerStatus()
         self.ip_channel_dict = {}
+
+        self.message_queue = {ip1:[], ip2:[], ip3:[]}
+        
+        self.ip1_delete_consi_thread = Thread(target=self.deleteInconsistentFile, args=(ip1,))
+        self.ip2_delete_consi_thread = Thread(target=self.deleteInconsistentFile, args=(ip2,))
+        self.ip3_delete_consi_thread = Thread(target=self.deleteInconsistentFile, args=(ip3,))
+        
+
+    def deleteInconsistentFile(self, ipaddress)
+        while True:
+            time.sleep(0.5)
+            channel = self.serverStatus.isChannelAlive(ipaddress)
+            stub = fileService_pb2_grpc.FileserviceStub(channel)
+
+            if channel:
+                if len(self.message_queue[ipaddress]) > 0:
+                    message = self.message_queue[ipaddress].pop(0)
+                        stub.FileDelete(message)
+
 
     #
     #   This service gets invoked when each cluster's leader informs the supernode
@@ -210,10 +235,16 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         if(channel1):
             stub = fileService_pb2_grpc.FileserviceStub(channel1)
             response1 = stub.FileDelete(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
+        else:
+            self.message_queue[primaryIP].append(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
         
         if(channel2):
             stub = fileService_pb2_grpc.FileserviceStub(channel2)
             response2 = stub.FileDelete(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
+        else:
+            self.message_queue[replicaIP].append(fileService_pb2.FileInfo(username = request.username, filename = request.filename))
+
+        
 
         db.deleteEntry(request.username + "_" + request.filename)
 
@@ -221,13 +252,13 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
         	return fileService_pb2.ack(success=True, message="File successfully deleted from both primary and replica : ")
         else:
         	if not channel1:
-            		return fileService_pb2.ack(success=False, message="Primary Server Down")
+                return fileService_pb2.ack(success=False, message="Primary Server Down")
         	elif response1.success == False:
            		return fileService_pb2.ack(success=False, message="Primary Delete Failed")
         	elif not channel2:
-            		return fileService_pb2.ack(success=False, message="Replica Server Down")
+                return fileService_pb2.ack(success=False, message="Replica Server Down")
         	else:
-            		return fileService_pb2.ack(success=False, message="Replica Delete Failed")
+                return fileService_pb2.ack(success=False, message="Replica Delete Failed")
             
     #
     #   This services is invoked when user wants to check if a file exists
