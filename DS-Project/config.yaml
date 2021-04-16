@@ -2,7 +2,7 @@
 # Config Variables
 
 one:
- hostname: 172.16.45.132
+ hostname: 10.160.0.13
  server_port : 3000
  raft_port : 3001
  #connection_port : [4001, 5001]
@@ -10,14 +10,14 @@ one:
 
 
 two:
- hostname: 172.16.45.133
+ hostname: 10.148.0.2
  server_port : 3000
  primary : 0
  raft_port: 3001
 
 
 three:
- hostname: 172.16.45.134
+ hostname: 10.146.0.2
  server_port : 3000
  primary : 0
  raft_port: 3001
@@ -26,4 +26,4 @@ LRUCapacity: 5
 
 UPLOAD_SHARD_SIZE: 52428800
 
-super_node_address: "172.16.45.131:50051"
+super_node_address: "10.160.0.12:50051"

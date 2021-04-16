@@ -133,17 +133,16 @@ class FileServer(fileService_pb2_grpc.FileserviceServicer):
 
     #   This service gets invoked when user wants to download
     def DownloadFile(self, request, context):
-    	print("Downloading File : " + request.filename)
+        print("Downloading File : " + request.filename)
         # Check if file exists
         if self.fileExists(request.username, request.filename) == False:
-        	return fileService_pb2.FileData(
+            return fileService_pb2.FileData(
                 username=request.username,
                 filename=request.filename,
                 data=bytes("", "utf-8"),
                 message="FNE",
             )
-
-
+            
         metadata_file = db.parseMetaData(request.username, request.filename)
 
         channel1 = self.serverStatus.isChannelAlive(metadata_file[0])
