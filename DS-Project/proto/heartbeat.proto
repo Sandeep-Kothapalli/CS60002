@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+service HearBeat {
+  rpc isAlive (NodeInfo) returns (Stats) {}
+}
+
+message NodeInfo {
+  string ip = 1;
+  string port = 2;
+}
+
+message Stats {
+   
+  string cpu_usage = 1;
+  string disk_space = 2; 
+  string used_mem = 3;
+}
