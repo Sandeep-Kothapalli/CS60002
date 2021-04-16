@@ -1,6 +1,0 @@
-grpcio
-grpcio-tools
-redis
-lru-dict
-psutil
-pysyncobj
